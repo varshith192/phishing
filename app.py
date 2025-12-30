@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, request, send_file, jsonify
 import joblib
 from urllib.parse import urlparse
 import socket
@@ -7,6 +7,8 @@ import whois
 from datetime import datetime
 
 app = Flask(__name__)
+
+# Load ML model
 model = joblib.load("phishing_url_model.pkl")
 
 RESTRICTED_KEYWORDS = [
@@ -41,68 +43,68 @@ def get_ip(domain):
 
 def get_ip_info(ip):
     try:
-        res = requests.get(f"https://ipapi.co/{ip}/json/", timeout=5)
-        data = res.json()
-        return data.get("country_name", "Unknown"), data.get("org", "Unknown ISP")
+        r = requests.get(f"https://ipapi.co/{ip}/json/", timeout=5)
+        d = r.json()
+        return d.get("country_name", "Unknown"), d.get("org", "Unknown ISP")
     except:
         return "Unknown", "Unknown ISP"
 
 def get_domain_age(domain):
     try:
         w = whois.whois(domain)
-        creation = w.creation_date
-        if isinstance(creation, list):
-            creation = creation[0]
-        age = datetime.now().year - creation.year
-        return f"{age} years"
+        c = w.creation_date
+        if isinstance(c, list):
+            c = c[0]
+        return f"{datetime.now().year - c.year} years"
     except:
         return "Not Available"
 
-@app.route("/", methods=["GET", "POST"])
-def home():
-    result = None
-    confidence = None
-    ip = country = isp = domain_age = None
+# Serve frontend
+@app.route("/", methods=["GET"])
+def index():
+    return send_file("index.html")
 
-    if request.method == "POST":
-        url = request.form["url"].lower()
+# API endpoint
+@app.route("/check", methods=["POST"])
+def check():
+    url = request.form["url"].lower()
 
-        domain = get_domain(url)
-        ip = get_ip(domain)
+    domain = get_domain(url)
+    ip = get_ip(domain)
 
-        if ip is None:
-            result = "❌ FAKE / INACTIVE WEBSITE — DOMAIN NOT FOUND"
-            return render_template("index.html", result=result)
+    if ip is None:
+        result = "❌ FAKE / INACTIVE WEBSITE — DOMAIN NOT FOUND"
+        return jsonify({"result": result})
 
-        country, isp = get_ip_info(ip)
-        domain_age = get_domain_age(domain)
+    if any(k in url for k in RESTRICTED_KEYWORDS):
+        result = "❌ PIRACY WEBSITE — NOT SAFE"
+        return jsonify({"result": result})
 
-        if any(word in url for word in RESTRICTED_KEYWORDS):
-            result = "❌ PIRACY WEBSITE — NOT SAFE"
+    if any(k in url for k in PHISHING_KEYWORDS):
+        result = "❌ PHISHING WEBSITE — NOT SAFE"
+        return jsonify({"result": result})
 
-        elif any(word in url for word in PHISHING_KEYWORDS):
-            result = "❌ PHISHING WEBSITE — NOT SAFE"
+    features = extract_features(url)
+    proba = model.predict_proba([features])[0]
+    pred = model.predict([features])[0]
+    confidence = round(max(proba) * 100, 2)
 
-        else:
-            features = extract_features(url)
-            proba = model.predict_proba([features])[0]
-            pred = model.predict([features])[0]
-            confidence = round(max(proba) * 100, 2)
+    if pred == 1:
+        result = "❌ PHISHING WEBSITE — NOT SAFE"
+    else:
+        result = "✅ SAFE WEBSITE"
 
-            if pred == 1:
-                result = "❌ PHISHING WEBSITE — NOT SAFE"
-            else:
-                result = "✅ SAFE WEBSITE"
+    country, isp = get_ip_info(ip)
+    domain_age = get_domain_age(domain)
 
-    return render_template(
-        "index.html",
-        result=result,
-        confidence=confidence,
-        ip=ip,
-        country=country,
-        isp=isp,
-        domain_age=domain_age
-    )
+    return jsonify({
+        "result": result,
+        "confidence": confidence,
+        "ip": ip,
+        "country": country,
+        "isp": isp,
+        "domain_age": domain_age
+    })
 
 if __name__ == "__main__":
     app.run(debug=True)

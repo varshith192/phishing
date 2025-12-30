@@ -20,7 +20,6 @@ body {
     color: #ffffff;
 }
 
-/* MAIN CARD */
 .app {
     width: 850px;
     background: rgba(0,0,0,0.55);
@@ -39,7 +38,6 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* HEADER */
 .header {
     display: flex;
     justify-content: space-between;
@@ -60,7 +58,6 @@ body {
     font-size: 13px;
 }
 
-/* INPUT SECTION */
 .input-box {
     display: flex;
     gap: 12px;
@@ -83,125 +80,120 @@ body {
     color: #003b4f;
     font-weight: bold;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.input-box button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0,229,255,0.5);
-}
-
-/* RESULT GRID */
 .result-grid {
     display: flex;
     gap: 20px;
     flex-wrap: wrap;
 }
 
-/* STATUS CARD */
-.status-card {
-    flex: 1;
-    min-width: 240px;
+.status-card, .info-card {
     background: rgba(255,255,255,0.08);
     border-radius: 14px;
     padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
     animation: slideUp 0.6s ease;
 }
 
-@keyframes slideUp {
-    from { opacity: 0; transform: translateY(15px); }
-    to { opacity: 1; transform: translateY(0); }
+.status-card {
+    flex: 1;
 }
 
-.status {
-    font-size: 18px;
-    font-weight: bold;
+.info-card {
+    flex: 2;
 }
 
 .safe {
     color: #2cff9b;
+    font-weight: bold;
 }
 
 .unsafe {
     color: #ff5c5c;
+    font-weight: bold;
 }
 
-/* INFO CARD */
-.info-card {
-    flex: 2;
-    min-width: 320px;
-    background: rgba(255,255,255,0.08);
-    border-radius: 14px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    animation: slideUp 0.6s ease;
-}
-
-.info-card span {
-    color: #cfd8dc;
-}
-
-/* FOOTER */
+/* Footer */
 .footer {
     text-align: center;
     font-size: 12px;
     color: #b0bec5;
-    margin-top: 5px;
+}
+
+.footer a {
+    color: white;
+    text-decoration: none;
+}
+
+.footer a:hover {
+    text-decoration: underline;
 }
 </style>
-
 </head>
-<body>
 
+<body>
 <div class="app">
 
     <div class="header">
-        <h1>Website Safety Detection</h1>
+        <h1>Website Phishing Safety Detection System</h1>
         
     </div>
 
-    <form method="post" class="input-box">
+    <form class="input-box" id="form">
         <input type="text" name="url" placeholder="Enter website URL (example.com)" required>
         <button type="submit">Analyze</button>
     </form>
 
-    {% if result %}
-    <div class="result-grid">
-
+    <div class="result-grid" id="results" style="display:none;">
         <div class="status-card">
             <span>Status</span>
-            <div class="status {{ 'unsafe' if 'NOT SAFE' in result or 'FAKE' in result else 'safe' }}">
-                {{ result }}
-            </div>
-
-            {% if confidence %}
-                <span>Confidence</span>
-                <b>{{ confidence }}%</b>
-            {% endif %}
+            <div id="status"></div>
+            <div id="confidence"></div>
         </div>
-
-        {% if ip %}
         <div class="info-card">
-            <span><b>IP Address:</b> {{ ip }}</span>
-            <span><b>Country:</b> {{ country }}</span>
-            <span><b>Hosting Provider:</b> {{ isp }}</span>
-            <span><b>Domain Age:</b> {{ domain_age }}</span>
+            <div id="ip"></div>
+            <div id="country"></div>
+            <div id="isp"></div>
+            <div id="domain_age"></div>
         </div>
-        {% endif %}
-
     </div>
-    {% endif %}
 
     <div class="footer">
-        any queries? mail me at: varshithdhara@gmail.com
+        Contact:
+        <a href="mailto:varshithdhara@gmail.com">varshithdhara@gmail.com</a>
     </div>
 
 </div>
+
+<script>
+document.getElementById("form").addEventListener("submit", async function(e){
+    e.preventDefault();
+    const formData = new FormData(this);
+    const res = await fetch("/check", { method: "POST", body: formData });
+    const data = await res.json();
+
+    document.getElementById("results").style.display = "flex";
+
+    const statusEl = document.getElementById("status");
+    statusEl.textContent = data.result;
+    statusEl.className = data.result.includes("SAFE") ? "safe" : "unsafe";
+
+    document.getElementById("confidence").textContent =
+        data.confidence ? "Confidence: " + data.confidence + "%" : "";
+
+    document.getElementById("ip").textContent =
+        data.ip ? "IP: " + data.ip : "";
+
+    document.getElementById("country").textContent =
+        data.country ? "Country: " + data.country : "";
+
+    document.getElementById("isp").textContent =
+        data.isp ? "Hosting: " + data.isp : "";
+
+    document.getElementById("domain_age").textContent =
+        data.domain_age ? "Domain Age: " + data.domain_age : "";
+});
+</script>
 
 </body>
 </html>
