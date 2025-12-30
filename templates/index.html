@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Website Safety Detection System</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    font-family: "Segoe UI", Arial, sans-serif;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #ffffff;
+}
+
+/* MAIN CARD */
+.app {
+    width: 850px;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(12px);
+    border-radius: 18px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    animation: fadeIn 0.8s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* HEADER */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header h1 {
+    margin: 0;
+    color: #00e5ff;
+    letter-spacing: 0.5px;
+}
+
+.badge {
+    background: rgba(0,229,255,0.15);
+    color: #00e5ff;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+}
+
+/* INPUT SECTION */
+.input-box {
+    display: flex;
+    gap: 12px;
+}
+
+.input-box input {
+    flex: 1;
+    padding: 14px;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+    font-size: 15px;
+}
+
+.input-box button {
+    padding: 14px 22px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #00e5ff, #00b0ff);
+    color: #003b4f;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-box button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,229,255,0.5);
+}
+
+/* RESULT GRID */
+.result-grid {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+/* STATUS CARD */
+.status-card {
+    flex: 1;
+    min-width: 240px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    animation: slideUp 0.6s ease;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.status {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.safe {
+    color: #2cff9b;
+}
+
+.unsafe {
+    color: #ff5c5c;
+}
+
+/* INFO CARD */
+.info-card {
+    flex: 2;
+    min-width: 320px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    animation: slideUp 0.6s ease;
+}
+
+.info-card span {
+    color: #cfd8dc;
+}
+
+/* FOOTER */
+.footer {
+    text-align: center;
+    font-size: 12px;
+    color: #b0bec5;
+    margin-top: 5px;
+}
+</style>
+
+</head>
+<body>
+
+<div class="app">
+
+    <div class="header">
+        <h1>Website Safety Detection</h1>
+        
+    </div>
+
+    <form method="post" class="input-box">
+        <input type="text" name="url" placeholder="Enter website URL (example.com)" required>
+        <button type="submit">Analyze</button>
+    </form>
+
+    {% if result %}
+    <div class="result-grid">
+
+        <div class="status-card">
+            <span>Status</span>
+            <div class="status {{ 'unsafe' if 'NOT SAFE' in result or 'FAKE' in result else 'safe' }}">
+                {{ result }}
+            </div>
+
+            {% if confidence %}
+                <span>Confidence</span>
+                <b>{{ confidence }}%</b>
+            {% endif %}
+        </div>
+
+        {% if ip %}
+        <div class="info-card">
+            <span><b>IP Address:</b> {{ ip }}</span>
+            <span><b>Country:</b> {{ country }}</span>
+            <span><b>Hosting Provider:</b> {{ isp }}</span>
+            <span><b>Domain Age:</b> {{ domain_age }}</span>
+        </div>
+        {% endif %}
+
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        any queries? mail me at: varshithdhara@gmail.com
+    </div>
+
+</div>
+
+</body>
+</html>
